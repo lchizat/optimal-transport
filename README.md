@@ -1,11 +1,11 @@
 # optimal-transport
 This Julia toolbox perform solves the optimal transport problem and handle various extensions.
 Using the dynamical formulation, 
-\[
-    \inf_(r,m,mu) (1/2) \sum_(x,t) ( |m(x,t)|^2/r  + \delta^2  mu(x,t)^2/r)     (1)
+
+    min_(r,m,mu) (1/2) \sum_(x,t) ( |m(x,t)|^2/r  + \delta^2  mu(x,t)^2/r)     (1)
     subject to d_t r + div (m) = mu                                             (2)
                r(0,.)=r0 ; r(1,.)=r1                                            (3)
-\]               
+               
 it performs Douglas-Rachford proximal spliting to minimize 
 
           G_1(U) + G_2(V) + G_3(U,V)
