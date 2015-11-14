@@ -53,6 +53,8 @@ function Staggered(ρ::Array{Float64},ω::Array{Array{Float64}},
   cdim[1] -= 1
   source = true
   lengths= ones(length(cdim))
+  @show lengths
+  @show cdim
   return Staggered(cdim,source,lengths,ρ,ω,ζ)
 end # constructor
 
@@ -94,7 +96,7 @@ function Staggered(cdim::Array{Int64,1}, source::Bool, randomfill=false)
   return Staggered(cdim,source,lengths,ρ,ω,ζ)
 end # constructor
 
-function Staggered(ρ,lengths,source)
+function Staggered(ρ,lengths::Array{Float64},source::Bool)
   cdim = [size(ρ)...]
   cdim[1] -= 1
 

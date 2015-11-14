@@ -9,7 +9,8 @@ export
     poisson!, projConstraints!,
     projInterp!, interp_proj_fast!,
     precomputeProjInterp,
-    doStepDR!, solveGeodesic
+    doStepDR!, solveGeodesic,
+    findRootNewton
 
 
 ################################################
@@ -33,13 +34,25 @@ function findRoot(a,b,c,d)
   return z
 end
 
+#=
+function findRoot(f,f′,x0 ,tol = 1e-15)
+  # highest real root of f by Newton method ( f is its derivative)
+  ff = f(x0)
+  while abs(ff) > tol
+    x0 -= ff/f′(x)
+    ff = f(x0)
+  end
+  return x0
+end
+=#
+
 ################################################
 # Proximal operator of the functional
 ################################################
 
 function proxFunctional!(dest, V, γ, p, q)
   dimΩ = length(V.cdim)-1
-  if p==1 && q == 0 # W1 / Kantorovitch-Rubinstein distances
+  if p==1 && q == 0 # W_1 / Kantorovitch-Rubinstein distances
     m = 0.0
     for i = 1:length(V.ρ)
       m = 0.0
@@ -52,7 +65,7 @@ function proxFunctional!(dest, V, γ, p, q)
         dest.ω[k][i] = softth*V.ω[k][i]
       end
     end
-  elseif p==2 && q==0 # W2 - Standard Benamou Brenier
+  elseif p==2 && q==0 # W_2 - 2- Wasserstein (std Benamou-Brenier)
     ρ = 0.0 ; m = 0.0; a = 0.0; b = 0.0; c = 0.0; d = 0.0; D = 0.0;
     for i = 1:length(V.ρ)
       ρ = V.ρ[i]; m = 0.0
@@ -70,7 +83,7 @@ function proxFunctional!(dest, V, γ, p, q)
       end
     end
 
-  elseif p==1 && q==1 # Hanin / Piccoli Rossi order 1
+  elseif p==1 && q==1 # Hanin / partial W_1 (Piccoli Rossi order 1)
     m = 0.0
     for i = 1:length(V.ρ)
       m = 0.0
@@ -85,7 +98,7 @@ function proxFunctional!(dest, V, γ, p, q)
       dest.ζ[i] = max(1-γ/abs(V.ζ[i]),0)*V.ζ[i]
     end
 
-  elseif p==2 && q==1 # Partial transport / Piccoli Rossi order 2
+  elseif p==2 && q==1 # Partial W_2 (Piccoli Rossi order 2)
     # standard proximal for the transport part
     ρ = 0.0 ; m = 0.0; a = 0.0; b = 0.0; c = 0.0; d = 0.0; D = 0.0;
     for i = 1:length(V.ρ)
@@ -105,7 +118,7 @@ function proxFunctional!(dest, V, γ, p, q)
       dest.ζ[i] = max(1-γ/abs(V.ζ[i]),0)*V.ζ[i]
     end
 
-    elseif p==1 && q==2 # Weird unknown thing
+    elseif p==1 && q==2 # Interpolating W1 & Fisher-Rao
     # standard proximal for the growth part
     ρ = 0.0 ; m = 0.0; a = 0.0; b = 0.0; c = 0.0; d = 0.0; D = 0.0;
     for i = 1:length(V.ρ)
@@ -128,7 +141,7 @@ function proxFunctional!(dest, V, γ, p, q)
       end
     end
 
-  elseif p==2 && q==2 #interpolating distance W2 - Fisher-Rao
+  elseif p==2 && q==2 #interpolating distance WF
     ρ = 0.0 ; m = 0.0; a = 0.0; b = 0.0; c = 0.0; d = 0.0
     for i = 1:length(V.ρ)
       ρ = V.ρ[i]; m = V.ζ[i]^2 # <- here the difference
@@ -146,8 +159,30 @@ function proxFunctional!(dest, V, γ, p, q)
       end
       dest.ζ[i] = D * V.ζ[i]
     end
-  else
-    error("Not supported orders (p,q)")
+  elseif p==Inf && q==1 # tolerant TV
+    error("Not written")
+  elseif p==Inf && q==2 # tolerant FR
+    error("Not written")
+  elseif p==1 && q==Inf # tolerant W_1
+    error("Not written")
+  elseif p==2 && q==Inf # tolerant W_2
+    error("Not written")
+  else # general method for any p,q
+    f = x -> 0. ; f′ = x -> 0.
+      for i = 1:length(V.ρ)
+      ρ = V.ρ[i]; m = V.ζ[i]^2
+      for k = 1:dimΩ
+        m += V.ω[k][i]^2
+      end
+      f  =
+      f′ =
+      dest.ρ[i] = max(0,findRoot(a,b,c,d))
+      D = 1 - γ/(γ + dest.ρ[i])
+      for k = 1:dimΩ
+        dest.ω[k][i] = D * V.ω[k][i]
+      end
+      dest.ζ[i] = D * V.ζ[i]
+    end
   end # fi
 
 end #proxFunctional!
@@ -387,6 +422,9 @@ function solveGeodesic(ρ_0, ρ_1, T;
   dimΩ = length(size(ρ_0))
   p = order[1]
   q = order[2]
+  ρ_0 = float64(ρ_0)
+  ρ_1 = float64(ρ_1)
+
   if q==0
     println("Computing geodesic for standard optimal transport...")
     source = false
