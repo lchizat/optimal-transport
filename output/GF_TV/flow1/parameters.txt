@@ -1,0 +1,23 @@
+This files contain a flow of the Total Variation functional with respect to the Wasserstein metric.
+Domain: [0,1] discretized into 700 points with Dirichlet boundary condition (the density at the boundary is forced to 0, otherwise, boundary effects appear).
+
+The flow is divided into 2 parts , A and B for clarity of the images.
+Plotted steps (the time resolution of the computed flow is twice higher and I used a log scale)
+A: 		~ approximative time in ms
+ 0.0       	~ 0 
+ 0.00242112	~ 2,5 
+ 0.0073108 	~ 7,3 
+ 0.0171859 	~ 17 
+ 0.0371297 	~ 37 
+
+B:
+ 0.0371297	~ 37 
+ 0.0774078 	~ 77 
+ 0.158753 	~ 158 
+ 0.323037 	~ 323
+ 0.654824 	~ 655
+ 1.3249 	~ 1325
+
+For the potentials, the staggered times are plotted, u is the 1st Kantorovich potential (for marginal \mu_k) and v is the 2nd (for marginal \mu_{k+1}).
+
+(note: epsilon = 2.10^(-6) in the scaling algorithm)

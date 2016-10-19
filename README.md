@@ -1,24 +1,23 @@
-# optimal-transport
-This Julia toolbox perform solves the optimal transport problem and handle various extensions.
-Using the dynamical formulation, 
+# Numerical methods for (unbalanced) optimal transport
+This Julia toolbox provides several tools for solving optimal transport, the unbalanced extensions and related problems.
 
-    min_(r,m,mu) (1/2) \sum_(x,t) ( |m(x,t)|^2/r  + \delta^2  mu(x,t)^2/r)     (1)
-    subject to d_t r + div (m) = mu                                             (2)
-               r(0,.)=r0 ; r(1,.)=r1                                            (3)
-               
-it performs Douglas-Rachford proximal spliting to minimize 
+What you can find here:
+- a computation of (unbalanced) optimal transport geodesics through extensions of the Benamou-Brenier dynamic formulation.
+- a demonstration of "scaling algorithms" for computing (unbalanced) optimal transport using the Kantorovich formulation
+- color transfer using optimal transport ;
+- Wasserstein gradient flow of the total variation functional (in 1d)
+- a tumor growth model computed as a gradient flow with an unbalanced optimal transport metric.
+- (in construction) (unabalanced) OT barycenters for big problems (using multiscale).
 
-          G_1(U) + G_2(V) + G_3(U,V)
-          
-where: - U is the variables on a centered grid and G_1 the functional (1)
-       - V is the variables on a staggered grid and G_2 the convex indicator of the affine constraints (2,3)
-       - G_3 is the convex indicator of the interpolation constraint (i.e U= interpolation (V) ).
 
-Supported extensions:
-- optimal transport between unbalanced measures,
-        - Fisher-Rao penalization on the source
-        - L1 penalization on the source (partial transport)
-        - L2 penalization on the source
+Check the associated article where the mathematical framework and algorithms are described:
+- [An interpolating distance between optimal transport and Fisher-Rao](http://arxiv.org/abs/1506.06430)
+- [Unbalanced optimal transport: geometry and Kantorovich formulation](https://arxiv.org/abs/1508.05216)
+- [Scaling algorithms for unbalanced optimal transport](https://arxiv.org/pdf/1607.05816)
+- in preparation(with S. Di Marino) : a tumor growth Hele-Shaw problem as a gradient flow
 
-In construction:
-- Riemannian geometry
+and see the associated notebooks for a simple overview.
+
+Extensions in preparation (if time permits!):
+- extension of the dynamic solver to Riemannian manifolds
+- gradient flow of the total variation in 2D

@@ -1,0 +1,375 @@
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
+\documentclass[13pt,aps,prb,preprint]{article}
+%\documentclass[reqno]{amsart}
+%\usepackage{color}
+\usepackage{eucal}
+
+\usepackage{amsmath,amsthm}
+\usepackage{graphicx}
+
+
+\usepackage{hyperref}
+\usepackage{latexsym}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{framed}
+\usepackage{mathrsfs}
+\usepackage[all]{xy}
+\usepackage{bm}
+\usepackage{picinpar}
+\usepackage[T1]{fontenc}
+\usepackage[french,english]{babel}
+\usepackage{array}
+
+\newtheorem{theo}{ Theorem}
+\newtheorem{prop}{Proposition}
+\newtheorem{lm}{Lemma}
+\newtheorem{rem}{Remark}
+\newtheorem{defi}{Definition}
+\newtheorem{example}{Example}
+\newtheorem{assumption}{Assumption}
+\newtheorem{corr}{Corollary}
+\newtheorem{cor}{Corollary}
+\newtheorem{hypo}{Assumption}
+
+\renewcommand{\div}{\mathbf{div}}
+\newcommand{\grad}{\mathbf{grad}}
+\newcommand{\Jac}{\mathbf{Jac}}
+\newcommand{\Conv}{\mathbf{Conv}}
+\newcommand{\mt}[1]{\mathbf{#1}}
+\newcommand{\ms}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\lip}{Lipschitz }
+\newcommand{\haus}{\mathcal{H}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\ve}{\varepsilon}
+\newcommand{\ffi}{\varphi}
+\newcommand{\deb}{\rightharpoonup}
+\newcommand{\destar}{\overset{*}\deb}
+\newcommand{\impl}{\Rightarrow}
+\newcommand{\sse}{\Leftrightarrow}
+\newcommand{\pical}{\mathcal{P}}
+\newcommand{\lcal}{\mathcal{L}}
+\newcommand{\mcal}{\mathcal{M}}
+\newcommand{\F}{\mathfrak{F}}
+\newcommand{\tto}{\rightarrow}
+\newcommand{\Rpinf}{\R\cup\left\{+\infty\right\}}
+\newcommand{\zerinf}{[0,+\infty]}
+\newcommand\dH{\mathop{\rm d_H}}
+\newcommand\huno{{\mathcal H}^1}
+\newcommand\duno{\overline{B_1}}
+\newcommand\Diff{\textit{Diff}}
+\newcommand\SDiff{\textit{SDiff}}
+\newcommand\N{\mathbb{N}}
+\newcommand\Z{\mathbb{Z}}
+\newcommand\Q{\mathbb{Q}}
+\newcommand\indic{{\bf \rm 1}}
+\newcommand\Sph{\mathbb{S}}
+\newcommand\D{\partial}
+\newcommand\iso{\backsimeq}
+\newcommand\NO[1]{\ensuremath{\Arrowvert #1 \Arrowvert}}
+\newcommand\VA[1]{\ensuremath{\vert #1 \vert}}
+\newcommand{\ei}{\text{\rm{ess}}\inf}
+\def\Vect{\mathbf{Vect}}
+\def\1{\mathchoice {\rm 1\mskip-4mu l} {\rm 1\mskip-4mu l}
+{\rm 1\mskip-4.5mu l} {\rm 1\mskip-5mu l}}
+%\newcommand{\1}{{1} \hspace{-0.25 em}{\rm I}}
+\addtolength\oddsidemargin{-0.5cm} \addtolength\evensidemargin{-0.5cm} \addtolength\textwidth{1cm}
+\addtolength\textheight{4cm} \addtolength\topmargin{-2.5cm}
+\newcommand\Om{\Omega}
+\newcommand\lb{\lambda}
+\newcommand\be{\beta}
+
+\begin{document}
+\title{Code Documentation
+\\
+%{\color{red}Not ready for distribution}
+}
+\author{L\'enaic Chizat}
+\maketitle
+\begin{abstract}
+Some technical details about the implementation of the Optimal Transport with Julia toolbox.
+\end{abstract}
+
+\section{Projection on the set of constraints}
+\subsection{No source term}
+
+In the case where there is no source term, the set of constraints reads
+\begin{equation}
+\mathcal{C} = \left\{   x := (\rho,m)^T \in \R^N \mid  Ax = b_0 , A = \left[
+\begin{array}{c}
+\div  \\ \hline
+b
+\end{array}
+\right]  \text{  and } b_0 = \left[
+\begin{array}{c}
+0  \\ \hline
+b_c
+\end{array}
+\right]  \right\}
+\end{equation}
+where $b_c$ is a column vector of size $r$ (the number of constraints). The proximal operator of the function $\iota_\mathcal{C}$ is the projector on $\mathcal{C}$, denoted $\mathcal{P}_\mathcal{C}$. It can explicitly computed as
+\begin{equation}
+\mathcal{P}_\mathcal{C} (x) = x + A^* (A A^*)^{-1}(b_0 -Ax)
+\end{equation}
+where $A^*$, the conjugate operator of $A$, reads $A^* = [-\grad , b^*] $. As the linear operator $b : \R^N \rightarrow \R^r$ selects the boundaries of $x$, we have $bb^*=Id_r$, the identity operator in $\R^r$ and $b^*b:=I_b$, an linear endomorphism in $\R^N$ which leave the components of $x$ on the boundaries unchanged and sets to zero the remaining coefficients. It follows readily
+\begin{equation}
+AA^*= \left[
+\begin{array}{c|c}
+- \Delta & \div\, b^*\\ \hline
+- b\, \grad & Id_r
+\end{array} \right] \left( =
+\left[
+\begin{array}{c|c}
+a& b\\ \hline
+c & d
+\end{array} \right]
+\right)
+\end{equation}
+where we introduced the Laplacian operator $\Delta = \div \, \grad$.
+
+We introduce $S$ the Schur complement of $AA^*$, namely $S=-\Delta -\div b^* Id_r^{-1}(-b \grad)$ --- we recall that it is generally defined as $S= a-bd^{-1}c$, using the bloc matrix notation above. It reduces to $S = - \div (Id_N - I_b)  \grad $. Finding $u$ such that $p=Su$  is possible, a particular solution is to solve a Poisson equation with Neumann boundary conditions (the gradient should vanish at the boundaries so that the $I_b$ operator can be neglected). We denote $u=S^{-1} p$ this solution. With the Schur complement, the inverse of a $4\times4$ invertible bloc matrix reads
+\begin{equation}
+\left[
+\begin{array}{c|c}
+a & b\\ \hline
+c & d
+\end{array} \right]^{-1}=
+\left[
+\begin{array}{c|c}
+I & 0\\ \hline
+-d^{-1}c & I
+\end{array} \right]
+\left[
+\begin{array}{c|c}
+S^{-1} & 0\\ \hline
+0 & d^{-1}
+\end{array} \right]
+\left[
+\begin{array}{c|c}
+I & -bd^{-1}\\ \hline
+0 & I
+\end{array} \right]
+\end{equation}
+
+\begin{rem} If we make sure that  $x$ satisfies the boundary conditions, the projector has a simpler expression. In the algorithm, we just need to make sure that the first input $x_0$ satisfies the BC-conditions and that all our operators preserve this property. In that case, the projector can be written in a simple form : for $x\in \R^N$ such that $bx=b_c$ and $w:= -\div (x)$, we have
+\begin{eqnarray}
+\mathcal{P}_\mathcal{C}^r (x) & = & x + A^* (A A^*)^{-1}(b_0 -Ax) \\
+& = & x + A^* \left[
+\begin{array}{c}
+S^{-1} w \\ \hline
+-Id_r^{-1} (-b\, \grad ) S^{-1}w
+\end{array} \right] \\
+& = & x + \left\{ -\grad S^{-1}+ I_b \grad S^{-1} \right\} (w) \\
+& = & x - (Id_N-I_b) \grad S^{-1} (-\div (x) )
+\end{eqnarray}
+when the subscript $r$ indicates that this projector is only valid on a certain restricted subspace of $\R^N$
+\end{rem}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{With source term}
+With a source term, the line of reasoning is similar. We use the same notations as before and the set of constraint now reads
+\begin{equation}
+\mathcal{C} = \left\{   x := (\rho,m,\zeta)^T \in \R^N \mid  Ax = b_0 , A = \left[
+\begin{array}{c}
+\div - f \\ \hline
+b
+\end{array}
+\right]  \text{  and } b_0 = \left[
+\begin{array}{c}
+0  \\ \hline
+b_c
+\end{array}
+\right]  \right\}
+\end{equation}
+where we introduced $f$, the linear operator $\R^N \rightarrow \R^M$ which selects the coefficients in $x$ describing $\zeta$. Also now, $\div$ has a slightly different meaning: it only acts on the components $(\rho,m)$ of $x$.
+
+Now $A^*$ the conjugate operator of $A$ reads $A^* = [-\grad - f^* , b^*] $---again, $\grad$ is a "restricted" gradient.  Notice that $f$ behaves similarly to $b$ since $ff^*=Id_M$ and $f^*f:=I_{\zeta}$, an operator which sets all components of $x$ to zero except those describing $\zeta$. Thus,
+\begin{equation}
+AA^*= \left[
+\begin{array}{c|c}
+P & (\div - f) b^*\\ \hline
+- b\, (\grad + f^*)& Id_r
+\end{array} \right]
+\end{equation}
+where we define $P:=(\div -f)(-\grad -f^*) = ff^* -\Delta$.
+
+Here the Schur complement of $AA^*$ is $S= - (\div - f) (Id_M-I_b) (\grad + f^*)$ which reduces to $S = - \div (Id_N - I_b)  \grad + Id_M$, by noticing that some products of operators vanish because there is no boundary constraint on $\zeta$. Finding $u$ such that $Su=p$  is possible, a particular solution is to solve a the equation $-\Delta u + u = p$ with Neumann boundary conditions, which can still be efficiently performed in the Fourier domain. We denote $u=S^{-1} p$ this solution.
+
+We still make the assumption that $x$ already satisfies the boundary constraints. Thus, for $x\in \R^N$ such that $bx=b_c$ and $w:= -\div (x)+ f(x) $, we have
+\begin{eqnarray}
+\mathcal{P}_\mathcal{C}^r (x) & = & x + A^* (A A^*)^{-1}(b_0 -Ax) \\
+& = & x + A^* \left[
+\begin{array}{c}
+S^{-1} w \\ \hline
+b ( \grad +f^*) S^{-1}w
+\end{array} \right] \\
+& = & x + \left\{ (- \grad -f^*) S^{-1} +b^*b(\grad +f^*)S^{-1} \right\} (w)  \\
+& = & x - (I_M-I_b)(\grad +f^*) S^{-1} (f - \div ) (x)
+\end{eqnarray}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{No assumption on the input}
+If we relax the assumption that the input satisfies the boundary conditions, the generalized projector $\mathcal{P}_\mathcal{C}$ can still be written in a simple form using the previous expression
+
+\begin{eqnarray}
+ \mathcal{P}_{\mathcal{C}}(x) & = & \mathcal{P}_{\mathcal{C}} (x + b^*(b_c -bx))\\
+ & = &\mathcal{P}^r_{\mathcal{C}} \circ \mathcal{P}_B (x)
+\end{eqnarray}
+where $\mathcal{P}_B$ is the projection on the boundary contraints. This can be checked by using the the factorized form of the inverse $AA^*$ matrix (see above).
+
+
+%\begin{subsection}{Asserting $\rho$ positive}
+%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Solve Discrete Poisson equation in the Fourier domain}
+In this section, we deal with 2D discrete fields, but the results straightforwardly generalize to fields with an arbitrary number of discrete variables. $p$ and $u$ are discrete functions i.e $p,u \in R^{N\times N}$, with sampling rate $1/h$ on both variables, and $\Delta$ refers to the discrete Laplacian operator, defined by
+$$\Delta(u)[i,j]=\frac{1}{h^2} \left(u[i+1,j]+u[i-1,j]+u[i,j+1]+u[i,j-1]-4u[i,j] \right)$$
+(the values on boundary are dealt with in the following). In the following, the index of the centered grid go from $1$ to $N$ and those of the staggered grid from $1/2$ to $N+1/2$.
+
+\subsection{With no source term}
+The problem $p=Su$ with unknown $u$ recasts into finding $u$ such that $\Delta (u) + p =0$. We can solve this equation in the Fourier domain as
+\begin{equation}
+	\left( 4 -2 \cos (2i\pi m/N) -2 \cos (2i\pi n/N) \right) \hat{u}[m,n] = h^2 \hat{p}[m,n] \, .
+\end{equation}
+Remark that the value of $\hat{u}[1,1]$ is not determined and needs to be arbitrarily defined.
+
+Recall that we are looking for a solution with vanishing gradient on the boundaries. The DCT-II implies that the extension $u_s$ of $u$ is even around $i,j=1/2$ and even around $i,j =N+1/2$. Thus, the gradient of $u_s$ restricted to the staggered grid $(i,j)\in \{1/2,\dots,N+1/2 \}^2$ vanishes on the boundaries of the staggered grid since $u_s$ admits local extrema there. Finally, transform back in the time domain with the DCT-III, which inverts the DCT-II transform.
+
+As a remainder, the DCT-II transform of $u$ is defined as
+\begin{equation}
+\hat{u}[k] = \sum_{n=1}^{N} u[n] \cos \left[ \frac{\pi}{N} (n+\frac{1}{2})k  \right]
+\end{equation}
+
+\subsection{With a source term}
+The problem $p=Su$ recasts into finding $u$ such that $\Delta (u) - u +p = 0$. In the Fourier domain, this equation reads
+\begin{equation}
+\left( 5 -2 \cos (2i\pi m/N) -2 \cos (2i\pi n/N) \right) \hat{u}[m,n] = h^2 \hat{p}[m,n] \, .
+\end{equation}
+
+The vanishing gradient BC on the staggered grid remains and we still use the DCT-II/DCT-III transforms. The slight difference to the previous case is that now the term $\hat{u}[1,1]$ is uniquely determined by the equation.
+
+\section{Projection on the interpolation constraints}
+We won't divide this section between source term / no source term, because the interpolation of the source term in straightforward and independent of the other term: as $\zeta$ is always defined on the centered grid, the projection simply consists in taking the mean.
+
+The interpolation constraint set is
+$$  \mathcal{H} = \left\{ (U,V) \mid V = I(U) , V \in \mathcal{E}_c, \text{ and } U \in \mathcal{E}_s, \text{plus BC} \right\}$$
+Where $I$ is the interpolation operator. Let us derive the projector on this set
+\begin{eqnarray}
+(U,V) & = & \mathscr{P}_{\mathcal{H}} (U_0, V_0) \\
+& = & \arg \min_{V=I(U)} \frac{1}{2} \vert U_0-U \vert^2 + \frac{1}{2} \vert V_0 - V \vert^2
+\end{eqnarray}
+
+We obtain
+$$U=Q^{-1}(U_0+I^*V_0)$$
+where $Q=I^*I+I_d$. Precompute $Q^{-1}$; may use $LU$ factorization as $Q$ is tridiagonal.
+Full matrix multiplication : longest step.
+
+
+\section{Proximal of the functional with Fisher-Rao metric}
+
+\subsection{General case}
+The discretized functional reads
+$$  J_{\lambda} (\rho,m,\zeta) = \sum_{x,t} \frac{\vert m(x,t) \vert^2+ \lambda \zeta^2 }{2\rho(x,t)}$$
+The proximal is the argmin of a minimization problem that can be solved independently on each point of the centered grid. The optimality conditions yields the following system:
+\begin{equation}
+\left\{
+\begin{array}{ccc}
+P( \rho ) & = & 0 \\
+m         & = & \tilde{m} \left(  1 - \frac{\gamma}{\rho + \gamma} \right) \\
+\zeta       & = & \tilde{\zeta} \left(  1 -  \frac{\lambda \gamma}{\rho + \lambda \gamma} \right)
+\end{array}
+\right.
+\end{equation}
+where $P$ is the fifth-order polynomial
+$$ P[X] = (X-\tilde{\rho})(X+\gamma)^2(X+\lambda \gamma)^2 -\frac{\gamma}{2} \left[  \vert \tilde{m} \vert^2 (X +\lambda \gamma )^2 + \lambda \tilde{\zeta}^2 (X+\gamma)^2 \right] $$
+where $(\tilde{\rho},\tilde{m},\tilde{\zeta})$ is the point where the proximal is evaluated. Its expanded form is
+\begin{eqnarray*}
+P[X] & = & X^5 \\
+	& + & X^4 \left[  2\gamma (\lambda+1) -\tilde{\rho} \right] \\
+	& + & X^3 \left[  \gamma^2 (\lambda^2 +4\lambda +1) -2\gamma \tilde{\rho} (1+ \lambda)\right]�\\
+	& + & X^2 \left[  2\lambda \gamma^3 (1+\lambda) -\tilde{\rho} \gamma^2 (\lambda^2 +4\lambda +1)
+	-\frac{\gamma}{2}(\vert \tilde{m} \vert^2 +\lambda \tilde{\zeta}^2)   \right] \\
+	& + & X^1 \left[  \lambda^2 \gamma^4 -2\tilde{\rho} \lambda \gamma^3 (\lambda+1)
+	- \lambda \gamma^2(\vert \tilde{m} \vert^2 +\tilde{\zeta}^2) \right] \\
+	& + & X^0 \left[ -\tilde{\rho} \lambda^2 \gamma^4 -\lambda \frac{\gamma^3}{2} (\lambda \vert \tilde{m} \vert^2 +\lambda \tilde{\zeta}^2)  \right]
+\end{eqnarray*}
+(double checked with SymPy). The proximal is the highest real root of this polynomial. However in practice we always put ourselves in the case of a functional with equal costs using an appropriate rescaling.
+
+\subsection{Special case $\lambda=1$}
+Using a change of variable, one can always reduce the problem to the case of a functional with equal costs on transport and mass creation ($\lambda =1$). In that case, the polynomial is
+$$ P[X] = (X-\tilde{\rho})(X+\gamma)^2 - \frac{\gamma}{2} (|\tilde{m}|^2+\tilde{\zeta}^2) $$
+where $(\tilde{\rho},\tilde{m},\tilde{\zeta})$ is the point where the proximal is evaluated. Its expanded form is
+\begin{eqnarray*}
+P[X] & = & X^3 \\
+	& + & X^2 \left[  2\gamma -\tilde{\rho} \right] \\
+	& + & X^1 \left[  \gamma^2 -2\gamma \tilde{\rho} \right]�\\
+	& + & X^0 \left[  -\frac{\gamma}{2} (|\tilde{m}|^2+\tilde{\zeta}^2)-\gamma^2 \tilde{\rho} \right]
+\end{eqnarray*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proximal of the Piccoli-Rossi functional}
+The discretized functional reads
+\begin{equation}
+J(\rho,m,\zeta) = \frac 12 \left( \sum_{x,t} |\zeta(x,t)| \right)^2  + \sum_{x,t} \frac{\vert m(x,t) \vert^2 }{2\rho(x,t)}
+\end{equation}
+
+The proximal can be taken independently with respect to $(\rho,m)$ and to $\zeta$. Let us thus consider the proximal of the function of $\zeta$ which is the squared $\ell_1$ norm. The sub differential of the squared $\ell_1$ norm at $x$ is $sign(x)\Vert x\Vert_1$ where $sign(\cdot)$ is the sub differential of the $\ell_1$ norm. The proximal $x$ of $\tilde{x}$ taken at $\gamma (|\cdot|)^2$ should satisfy the following optimality condition:
+\begin{eqnarray*}
+x - x^* \in \gamma sign(x^*) \Vert x^* \Vert_1 \, .
+\end{eqnarray*}
+This can be solved for $x^*=soft_{\lambda}(x)$ where $soft_{\lambda}(x)=sign(x) \left( \Vert x\Vert -\lambda \right)_+$. The problem recasts in finding a threshold $\lambda$ such that
+$$
+f_{\gamma}(\lambda) := \Vert x - soft_{\lambda}(x) \Vert_{\infty} - \gamma \Vert soft_{\lambda}(x) \Vert_1 =0 \, .
+$$
+Let the indices denote the sorted values of vector $x=(x_{k_1},\dots,x_{k_N})$, i.e $\vert x_1 \vert \leq \dots \leq \vert x_N \vert$. Remark that
+$$
+\begin{cases}
+f(\vert x_{i+1} \vert) - f(\vert x_i \vert ) = \left( 1+\gamma (N-i) \right) \left( \vert x_{i+1} \vert - \vert x_i \vert  \right)\\
+f(0) = -\gamma \Vert x \Vert_1\\
+f(\vert x_N \vert) = \Vert x \Vert_{\infty}=\vert x_N \vert \\
+f'(\lambda) = 1 + \gamma (N-i)
+\end{cases}
+$$
+
+So we can compute the proximal with the following algorithm:
+\begin{enumerate}
+\item Sort $(\vert x_i \vert)_i$;
+\item Compute $f(\vert x_i \vert )$ recursively with the formula above (may stop when crossing zero);
+\item Find $k$ such that $f(\vert x_k \vert) \leq 0 < f(\vert x_{k+1} \vert)$;
+\item Set $\lambda = \vert x_k \vert - \frac{f(\vert x_k \vert)}{1+\gamma (N-k)}$;
+\item Set $x^*=soft_{\lambda}(x)$.
+\end{enumerate}
+
+In the special case $x=0$, return $x^*=0$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}
+\begin{tabular}{l|p{2.5cm}p{2.5cm}p{2.5cm}p{2.5cm}}
+Centered grid dimensions	& $Prox_J(\lambda =1)$ 	& $Proj_C$ 	& $Proj_I$
+
+Q inverted 	& $Proj_I$
+
+LU decomp.\\ \hline
+$(16,16,8)$		& 3,6 ms 		& 6,1 ms 		& 11,2 ms				&	11,0 ms \\
+$(120,120,20)$ 	& 0,57 s		& 0,50 s		& 0,82 s				& 0,66 s \\
+$(256,256,32)$ 	&   5,7 s   		&   4,2 s 		&    8,9 s  				& 4,3 s   \\
+$(1024,32)$		& 59 ms		&   30 ms		& 138 ms				& 33 ms	      \\ 	\hline
+\end{tabular}
+\caption{CPU times for the core functions of the algorithm.}
+\label{Computational times}
+\end{figure}
+
+%\bibliographystyle{alpha}
+%\bibliography{SecOrdLandBig}
+\end{document}
