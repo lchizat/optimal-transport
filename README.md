@@ -1,4 +1,9 @@
 # Numerical methods for (unbalanced) optimal transport
+This code is not maintained anymore and written in a deprecated version of Julia. 
+For an stable implementation of unbalanced optimal transport, see [Gabriel Peyré's code](https://github.com/gpeyre/2017-MCOM-unbalanced-ot/blob/master/matlab/sinkhorn_log.m).
+
+--------------------------------------
+
 This Julia toolbox provides several tools for solving optimal transport, the unbalanced extensions and related problems.
 
 What you can find here:
